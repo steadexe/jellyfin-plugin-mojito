@@ -63,6 +63,31 @@ def run_build() -> None:
     )
 
 
+def build_meta_json(meta: dict) -> bytes:
+    """Build the meta.json Jellyfin expects in the plugin folder.
+
+    Without it, the plugin manager invents an id (MD5 of the folder name),
+    which breaks DELETE /Plugins/{guid} (uninstall returns 404) for manual
+    installs. Same shape/casing as PluginManager.SaveManifest (camelCase).
+    """
+    manifest = {
+        "category": meta.get("category", "General"),
+        "changelog": meta.get("changelog", ""),
+        "description": meta.get("description", ""),
+        "id": meta["guid"],
+        "name": meta["name"],
+        "overview": meta.get("overview", ""),
+        "owner": meta.get("owner", ""),
+        "targetAbi": meta["targetAbi"],
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": meta["version"],
+        "status": "Active",
+        "autoUpdate": True,
+        "assemblies": ["Jellyfin.Plugin.Mojito.dll"],
+    }
+    return (json.dumps(manifest, indent=4, ensure_ascii=False) + "\n").encode("utf-8")
+
+
 def package(meta: dict) -> Path:
     ARTIFACTS.mkdir(exist_ok=True)
     version = meta["version"]
@@ -70,6 +95,7 @@ def package(meta: dict) -> Path:
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as zf:
         zf.write(DLL, "Jellyfin.Plugin.Mojito.dll")
         zf.write(BUILD_YAML, "build.yaml")
+        zf.writestr("meta.json", build_meta_json(meta))
     print(f"Packaged {zip_path}", file=sys.stderr)
     return zip_path
 
