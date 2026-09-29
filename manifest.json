@@ -8,6 +8,14 @@
         "overview": "Recherche de médias via Sonarr/Radarr, streaming torrent via qBittorrent pendant le téléchargement.",
         "versions": [
             {
+                "checksum": "d1e8110aef34e1447aeb72764ca470cd",
+                "changelog": "Embarque meta.json dans le ZIP : sans ce fichier, Jellyfin invente un ID de plugin (MD5 du nom de dossier) et la désinstallation échoue en 404, notamment en installation manuelle.",
+                "targetAbi": "12.0.0.0",
+                "sourceUrl": "https://github.com/steadexe/jellyfin-plugin-mojito/releases/download/v0.1.0.2/Jellyfin.Plugin.Mojito_0.1.0.2.zip",
+                "timestamp": "2026-09-29T16:10:09Z",
+                "version": "0.1.0.2"
+            },
+            {
                 "checksum": "ad1f00356a7689e79ee3d1c4b2651dfe",
                 "changelog": "Corrige l'absence de menu de configuration sur Jellyfin 12 : page unique avec panneau de paramètres intégré (le web 12 associe les paramètres du plugin à la page EnableInMainMenu quand plusieurs pages existent). Meilleur affichage des erreurs dans la page de recherche.",
                 "targetAbi": "12.0.0.0",
