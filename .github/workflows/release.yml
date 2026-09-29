@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Detect version
+        id: ver
+        run: |
+          VERSION=$(grep '^version:' build.yaml | head -1 | sed 's/version: *"\([^"]*\)".*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already published
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ steps.ver.outputs.tag }}" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Test
+        if: steps.check.outputs.exists == 'false'
+        run: dotnet test Mojito.Tests/Mojito.Tests.csproj -c Release
+
+      - name: Build and package
+        if: steps.check.outputs.exists == 'false'
+        id: package
+        run: |
+          ZIP=$(python3 scripts/build_release.py)
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.ver.outputs.tag }}" "${{ steps.package.outputs.zip }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "${{ steps.ver.outputs.tag }}" \
+            --generate-notes
+
+      - name: Update plugin repository manifest
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          SOURCE_URL="https://github.com/$GITHUB_REPOSITORY/releases/download/${{ steps.ver.outputs.tag }}/$(basename "${{ steps.package.outputs.zip }}")"
+          python3 scripts/build_release.py --update-manifest \
+            --zip "${{ steps.package.outputs.zip }}" \
+            --source-url "$SOURCE_URL"
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Update plugin repository manifest for ${{ steps.ver.outputs.tag }}"
+          git push

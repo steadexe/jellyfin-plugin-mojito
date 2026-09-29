@@ -1,0 +1,19 @@
+---
+name: "Mojito"
+guid: "b4f7a2d1-9c83-4e16-8a5d-2f6b0e9c4a17"
+version: "0.1.0.0"
+targetAbi: "12.0.0.0"
+framework: "net10.0"
+overview: "Recherche de médias via Sonarr/Radarr, streaming torrent via qBittorrent pendant le téléchargement."
+description: >
+  Jellyfin Mojito résout un film ou une série via Radarr/Sonarr, sélectionne
+  la release correspondant au quality profile configuré, la pousse vers
+  qBittorrent en téléchargement séquentiel (tag et catégorie configurables)
+  et lance la lecture dans Jellyfin pendant que le téléchargement progresse.
+category: "Channels"
+owner: "mojito"
+artifacts:
+- "Jellyfin.Plugin.Mojito.dll"
+changelog: >
+  Première version fonctionnelle : recherche assistée via Radarr/Sonarr,
+  sessions de streaming qBittorrent, canal Jellyfin, page de configuration.

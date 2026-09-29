@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Mojito</title>
+</head>
+<body>
+    <div id="MojitoSearchPage" data-role="page" class="page type-interior" data-require="emby-input,emby-button,emby-select">
+        <div data-role="content">
+            <div class="content-primary">
+                <h2>Mojito — recherche et lecture en direct</h2>
+                <div class="inputContainer" style="display:flex;gap:8px;">
+                    <select is="emby-select" id="MojitoType" class="emby-select-withcolor emby-select" style="max-width:140px;">
+                        <option value="movie">Film</option>
+                        <option value="series">Série</option>
+                    </select>
+                    <input id="MojitoQuery" type="text" is="emby-input" placeholder="Titre..." style="flex:1" />
+                    <button is="emby-button" type="button" class="raised emby-button" id="MojitoSearchBtn"><span>Rechercher</span></button>
+                </div>
+                <div id="MojitoResults" style="margin-top:1em;"></div>
+                <div id="MojitoEpisodes" style="margin-top:1em;"></div>
+                <div id="MojitoReleases" style="margin-top:1em;"></div>
+
+                <h2 style="margin-top:2em;">Sessions</h2>
+                <div id="MojitoSessions"></div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var MojitoState = { selectedSeriesTvdbId: 0, selectedEpisode: null };
+
+            function mjGet(path) {
+                return ApiClient.ajax({ url: ApiClient.getUrl(path), type: 'GET', dataType: 'json' });
+            }
+            function mjPost(path, body) {
+                return ApiClient.ajax({
+                    url: ApiClient.getUrl(path),
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify(body || {})
+                });
+            }
+
+            function mjSize(bytes) {
+                var u = ['o', 'Ko', 'Mo', 'Go'];
+                var i = 0; var b = bytes;
+                while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+                return b.toFixed(1) + ' ' + u[i];
+            }
+
+            function mjSearch() {
+                var type = document.querySelector('#MojitoType').value;
+                var query = document.querySelector('#MojitoQuery').value.trim();
+                if (!query) return;
+                document.querySelector('#MojitoResults').innerHTML = '<em>Recherche...</em>';
+                document.querySelector('#MojitoEpisodes').innerHTML = '';
+                document.querySelector('#MojitoReleases').innerHTML = '';
+                mjGet('mojito/lookup?type=' + type + '&query=' + encodeURIComponent(query)).then(function (list) {
+                    var html = '';
+                    list.forEach(function (m) {
+                        html += '<div class="card" style="display:flex;gap:12px;padding:8px;align-items:center;border-bottom:1px solid #333;">'
+                            + (m.Poster ? '<img src="' + m.Poster + '" style="height:80px;" />' : '')
+                            + '<div style="flex:1"><div>' + m.Title + ' (' + m.Year + ')</div>'
+                            + '<div style="font-size:0.8em;color:#aaa;">' + (m.Overview || '') + '</div></div>'
+                            + '<button is="emby-button" type="button" class="raised emby-button" onclick="mjPickMedia('
+                            + (type === 'movie' ? m.TmdbId : m.TvdbId) + ')"><span>Releases</span></button>'
+                            + '</div>';
+                    });
+                    document.querySelector('#MojitoResults').innerHTML = html || '<em>Aucun résultat.</em>';
+                }).catch(function (err) {
+                    document.querySelector('#MojitoResults').innerHTML = '<div class="errorMessage">Erreur : ' + (err.message || err) + '</div>';
+                });
+            }
+
+            window.mjPickMedia = function (id) {
+                var type = document.querySelector('#MojitoType').value;
+                if (type === 'series') {
+                    MojitoState.selectedSeriesTvdbId = id;
+                    document.querySelector('#MojitoEpisodes').innerHTML = '<em>Chargement des épisodes...</em>';
+                    mjGet('mojito/episodes?seriesTvdbId=' + id).then(function (data) {
+                        var html = '<h3>Épisodes</h3>';
+                        data.Episodes.forEach(function (e) {
+                            html += '<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;gap:8px;align-items:center;">'
+                                + '<span style="min-width:80px;">S' + e.SeasonNumber + 'E' + e.EpisodeNumber + '</span>'
+                                + '<span style="flex:1">' + e.Title + '</span>'
+                                + '<button is="emby-button" type="button" class="raised emby-button" onclick="mjEpisode('
+                                + e.Id + ', \'S' + e.SeasonNumber + 'E' + e.EpisodeNumber + ' — ' + e.Title.replace(/'/g, '') + '\')"><span>Releases</span></button>'
+                                + '</div>';
+                        });
+                        MojitoState.seriesId = data.SeriesId;
+                        MojitoState.seriesCreatedBySession = data.SeriesCreatedBySession;
+                        MojitoState.seriesTitle = data.SeriesTitle;
+                        document.querySelector('#MojitoEpisodes').innerHTML = html;
+                    }).catch(function (err) {
+                        document.querySelector('#MojitoEpisodes').innerHTML = '<div class="errorMessage">Erreur : ' + (err.message || err) + '</div>';
+                    });
+                } else {
+                    document.querySelector('#MojitoReleases').innerHTML = '<em>Recherche des releases...</em>';
+                    mjGet('mojito/releases?movieTmdbId=' + id).then(function (releases) { mjShowReleases(releases, { MovieTmdbId: id }); });
+                }
+            };
+
+            window.mjEpisode = function (episodeId, info) {
+                MojitoState.selectedEpisode = episodeId;
+                document.querySelector('#MojitoReleases').innerHTML = '<em>Recherche des releases...</em>';
+                mjGet('mojito/releases?episodeId=' + episodeId).then(function (releases) {
+                    mjShowReleases(releases, {
+                        EpisodeId: episodeId,
+                        EpisodeInfo: info,
+                        SeriesId: MojitoState.seriesId || 0,
+                        SeriesCreatedBySession: !!MojitoState.seriesCreatedBySession,
+                        Title: MojitoState.seriesTitle
+                    });
+                });
+            };
+
+            function mjShowReleases(releases, payload) {
+                if (!releases.length) {
+                    document.querySelector('#MojitoReleases').innerHTML = '<em>Aucune release torrent disponible.</em>';
+                    return;
+                }
+                var html = '<h3>Releases <span style="font-weight:400;font-size:0.8em;">(triées selon le quality profile)</span></h3>';
+                releases.slice(0, 20).forEach(function (r, i) {
+                    html += '<div style="padding:6px 0;border-bottom:1px solid #333;display:flex;gap:8px;align-items:center;">'
+                        + '<div style="flex:1"><div>' + r.Title + '</div>'
+                        + '<div style="font-size:0.8em;color:#aaa;">' + r.Indexer + ' — ' + r.Quality + ' — ' + mjSize(r.Size)
+                        + ' — ' + r.Seeders + ' seeders' + (r.Streamable ? '' : ' — conteneur non optimal pour le streaming') + '</div></div>'
+                        + '<button is="emby-button" type="button" class="raised button-submit emby-button" onclick="mjPlay('
+                        + i + ')"><span>Stream</span></button>'
+                        + '</div>';
+                });
+                html += '<button is="emby-button" type="button" class="raised emby-button" style="margin-top:8px" onclick="mjPlay(0)"><span>Stream (meilleure release)</span></button>';
+                document.querySelector('#MojitoReleases').innerHTML = html;
+                window._mjReleases = releases;
+                window._mjPayload = payload;
+            }
+
+            window.mjPlay = function (index) {
+                var r = window._mjReleases[index];
+                var body = Object.assign({}, window._mjPayload, { ReleaseGuid: r ? r.Guid : null });
+                mjPost('mojito/play', body).then(function (session) {
+                    require(['toast'], function (toast) {
+                        toast('Session créée : ' + session.Title + '. Lecture possible depuis le canal Mojito dès que le tampon est prêt.');
+                    });
+                    mjSessions();
+                }).catch(function (err) {
+                    require(['toast'], function (toast) { toast('Erreur : ' + (err.message || err)); });
+                });
+            };
+
+            window.mjOpen = function (sessionId) {
+                try {
+                    Dashboard.navigate('details?id=' + sessionId);
+                } catch (e) {
+                    window.location.hash = '#!/details?id=' + sessionId;
+                }
+            };
+
+            function mjSessions() {
+                mjGet('mojito/sessions').then(function (sessions) {
+                    var html = '';
+                    sessions.forEach(function (s) {
+                        html += '<div style="padding:6px 0;border-bottom:1px solid #333;display:flex;gap:8px;align-items:center;">'
+                            + '<div style="flex:1"><div>' + s.Title + (s.EpisodeInfo ? ' — ' + s.EpisodeInfo : '') + '</div>'
+                            + '<div style="font-size:0.8em;color:#aaa;">' + s.State + ' — ' + Math.round(s.Progress * 100) + '%'
+                            + ' — ' + mjSize(s.DlSpeed) + '/s</div></div>'
+                            + '<button is="emby-button" type="button" class="raised emby-button" onclick="mjOpen(\'' + s.Id + '\')"><span>Ouvrir</span></button>'
+                            + '<button is="emby-button" type="button" class="raised emby-button" onclick="mjSessionAction(\'' + s.Id + '\', \'stop\')"><span>Terminer</span></button>'
+                            + '</div>';
+                    });
+                    document.querySelector('#MojitoSessions').innerHTML = html || '<em>Aucune session.</em>';
+                }).catch(function () {
+                    document.querySelector('#MojitoSessions').innerHTML = '<em>Impossible de lister les sessions.</em>';
+                });
+            }
+
+            window.mjSessionAction = function (sessionId, action) {
+                mjPost('mojito/sessions/' + sessionId + '/' + action, {}).then(function () {
+                    mjSessions();
+                }).catch(function (err) {
+                    require(['toast'], function (toast) { toast('Erreur : ' + (err.message || err)); });
+                });
+            };
+
+            document.querySelector('#MojitoSearchPage').addEventListener('pageshow', function () {
+                mjSessions();
+                if (!window._mjSessionsTimer) {
+                    window._mjSessionsTimer = setInterval(mjSessions, 5000);
+                }
+            });
+
+            document.querySelector('#MojitoSearchBtn').addEventListener('click', mjSearch);
+            document.querySelector('#MojitoQuery').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); mjSearch(); }
+            });
+        </script>
+    </div>
+</body>
+</html>
