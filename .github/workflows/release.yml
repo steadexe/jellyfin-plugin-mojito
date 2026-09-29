@@ -47,7 +47,7 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         id: package
         run: |
-          ZIP=$(python3 scripts/build_release.py)
+          ZIP=$(python3 scripts/build_release.py | tail -n1)
           echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release

@@ -54,11 +54,12 @@ def parse_build_yaml() -> dict:
 
 
 def run_build() -> None:
-    print("Building plugin (Release)...")
+    print("Building plugin (Release)...", file=sys.stderr)
     subprocess.run(
         ["dotnet", "build", str(PROJECT), "-c", "Release"],
         cwd=ROOT,
         check=True,
+        stdout=sys.stderr,
     )
 
 
@@ -69,7 +70,7 @@ def package(meta: dict) -> Path:
     with ZipFile(zip_path, "w", ZIP_DEFLATED) as zf:
         zf.write(DLL, "Jellyfin.Plugin.Mojito.dll")
         zf.write(BUILD_YAML, "build.yaml")
-    print(f"Packaged {zip_path}")
+    print(f"Packaged {zip_path}", file=sys.stderr)
     return zip_path
 
 
@@ -115,7 +116,7 @@ def update_manifest(meta: dict, zip_path: Path, source_url: str) -> None:
     plugin_entry["versions"] = versions
 
     MANIFEST.write_text(json.dumps(manifest, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"manifest.json updated: {meta['name']} {version} ({entry['checksum']})")
+    print(f"manifest.json updated: {meta['name']} {version} ({entry['checksum']})", file=sys.stderr)
 
 
 def main() -> None:
