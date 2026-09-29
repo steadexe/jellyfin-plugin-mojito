@@ -8,11 +8,11 @@
         "overview": "Recherche de médias via Sonarr/Radarr, streaming torrent via qBittorrent pendant le téléchargement.",
         "versions": [
             {
-                "checksum": "491c02f14194e18195ee638a74db9f21",
+                "checksum": "d62f3722d951d0e0a19d640ca79c1b92",
                 "changelog": "Première version fonctionnelle : recherche assistée via Radarr/Sonarr, sessions de streaming qBittorrent, canal Jellyfin, page de configuration.",
                 "targetAbi": "12.0.0.0",
                 "sourceUrl": "https://github.com/steadexe/jellyfin-plugin-mojito/releases/download/v0.1.0.0/Jellyfin.Plugin.Mojito_0.1.0.0.zip",
-                "timestamp": "2026-09-29T15:52:36Z",
+                "timestamp": "2026-09-29T15:55:16Z",
                 "version": "0.1.0.0"
             }
         ]
