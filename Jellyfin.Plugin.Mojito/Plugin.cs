@@ -44,16 +44,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()
     {
+        // Single page on purpose: the Jellyfin 12 web client picks the plugin's
+        // configuration page from this list, and prefers the EnableInMainMenu
+        // entry when several pages exist. One page serves both the main menu
+        // and the dashboard settings entry; the settings panel inside the page
+        // is shown only to users who can read the plugin configuration.
         return
         [
             new PluginPageInfo
             {
-                Name = "Mojito",
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace)
-            },
-            new PluginPageInfo
-            {
-                Name = "Mojito Search",
+                Name = Name,
                 DisplayName = "Mojito",
                 EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.WebUI.mojito.html", GetType().Namespace),
                 EnableInMainMenu = true,

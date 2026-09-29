@@ -5,7 +5,7 @@
     <title>Mojito</title>
 </head>
 <body>
-    <div id="MojitoSearchPage" data-role="page" class="page type-interior" data-require="emby-input,emby-button,emby-select">
+    <div id="MojitoPage" data-role="page" class="page type-interior" data-require="emby-input,emby-button,emby-select,emby-checkbox">
         <div data-role="content">
             <div class="content-primary">
                 <h2>Mojito — recherche et lecture en direct</h2>
@@ -23,14 +23,118 @@
 
                 <h2 style="margin-top:2em;">Sessions</h2>
                 <div id="MojitoSessions"></div>
+
+                <div id="MojitoSettings" style="display:none;">
+                    <h2 style="margin-top:2em;">Paramètres</h2>
+                    <form id="MojitoConfigForm">
+                        <h3>Sonarr / Radarr</h3>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="RadarrUrl">URL Radarr</label>
+                            <input id="RadarrUrl" type="text" is="emby-input" />
+                            <div class="fieldDescription">Exemple : http://localhost:7878</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="RadarrApiKey">Clé API Radarr</label>
+                            <input id="RadarrApiKey" type="text" is="emby-input" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="SonarrUrl">URL Sonarr</label>
+                            <input id="SonarrUrl" type="text" is="emby-input" />
+                            <div class="fieldDescription">Exemple : http://localhost:8989</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="SonarrApiKey">Clé API Sonarr</label>
+                            <input id="SonarrApiKey" type="text" is="emby-input" />
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="MovieQualityProfileId">Quality profile films (Radarr)</label>
+                            <select is="emby-select" id="MovieQualityProfileId" class="emby-select-withcolor emby-select"></select>
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="SeriesQualityProfileId">Quality profile séries (Sonarr)</label>
+                            <select is="emby-select" id="SeriesQualityProfileId" class="emby-select-withcolor emby-select"></select>
+                        </div>
+
+                        <h3>qBittorrent</h3>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="QbitUrl">URL qBittorrent</label>
+                            <input id="QbitUrl" type="text" is="emby-input" />
+                            <div class="fieldDescription">Exemple : http://localhost:8080 (API Web activée)</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="QbitUsername">Utilisateur qBittorrent</label>
+                            <input id="QbitUsername" type="text" is="emby-input" />
+                            <div class="fieldDescription">Laisser vide si le bypass localhost est activé dans qBittorrent.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="QbitPassword">Mot de passe qBittorrent</label>
+                            <input id="QbitPassword" type="password" is="emby-input" />
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="SavePath">Dossier de téléchargement</label>
+                            <input id="SavePath" type="text" is="emby-input" />
+                            <div class="fieldDescription">Doit être visible par le process Jellyfin (mount commun Jellyfin/qBittorrent).</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="TorrentTag">Tag qBittorrent</label>
+                            <input id="TorrentTag" type="text" is="emby-input" />
+                            <div class="fieldDescription">Tag appliqué à tous les torrents Mojito (permet de les filtrer/gérer dans qBittorrent).</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="TorrentCategory">Catégorie qBittorrent</label>
+                            <input id="TorrentCategory" type="text" is="emby-input" />
+                        </div>
+
+                        <h3>Lecture en direct</h3>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="StartThresholdBytes">Tampon avant lecture (octets)</label>
+                            <input id="StartThresholdBytes" type="number" is="emby-input" min="1048576" />
+                            <div class="fieldDescription">Défaut : 31457280 (30 Mo).</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="StartThresholdPercent">Tampon avant lecture (%)</label>
+                            <input id="StartThresholdPercent" type="number" is="emby-input" min="1" max="100" />
+                        </div>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="Cleanup">Action après la lecture</label>
+                            <select is="emby-select" id="Cleanup" class="emby-select-withcolor emby-select">
+                                <option value="0">Pause du torrent (reprise possible)</option>
+                                <option value="1">Suppression du torrent et des fichiers</option>
+                                <option value="2">Continuer le partage (seed)</option>
+                            </select>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="KeepInLibrary" type="checkbox" is="emby-checkbox" />
+                                <span>Conserver le média dans la bibliothèque Radarr/Sonarr</span>
+                            </label>
+                            <div class="fieldDescription">Par défaut, Mojito retire le média ajouté à Radarr/Sonarr en fin de session.</div>
+                        </div>
+                        <div>
+                            <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                                <span>Enregistrer</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
         <script type="text/javascript">
-            var MojitoState = { selectedSeriesTvdbId: 0, selectedEpisode: null };
+            var MojitoConfig = { pluginUniqueId: 'b4f7a2d1-9c83-4e16-8a5d-2f6b0e9c4a17' };
+            var MojitoState = { seriesId: 0, seriesCreatedBySession: false, seriesTitle: '' };
+
+            function mjErr(err) {
+                if (!err) return 'Erreur inconnue';
+                if (typeof err === 'string') return err;
+                if (err.message) return err.message;
+                if (err.status) return 'Erreur HTTP ' + err.status + (err.statusText ? ' ' + err.statusText : '');
+                try { return JSON.stringify(err); } catch (e) { return String(err); }
+            }
 
             function mjGet(path) {
                 return ApiClient.ajax({ url: ApiClient.getUrl(path), type: 'GET', dataType: 'json' });
             }
+
             function mjPost(path, body) {
                 return ApiClient.ajax({
                     url: ApiClient.getUrl(path),
@@ -43,7 +147,7 @@
 
             function mjSize(bytes) {
                 var u = ['o', 'Ko', 'Mo', 'Go'];
-                var i = 0; var b = bytes;
+                var i = 0; var b = bytes || 0;
                 while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
                 return b.toFixed(1) + ' ' + u[i];
             }
@@ -58,7 +162,7 @@
                 mjGet('mojito/lookup?type=' + type + '&query=' + encodeURIComponent(query)).then(function (list) {
                     var html = '';
                     list.forEach(function (m) {
-                        html += '<div class="card" style="display:flex;gap:12px;padding:8px;align-items:center;border-bottom:1px solid #333;">'
+                        html += '<div style="display:flex;gap:12px;padding:8px;align-items:center;border-bottom:1px solid #333;">'
                             + (m.Poster ? '<img src="' + m.Poster + '" style="height:80px;" />' : '')
                             + '<div style="flex:1"><div>' + m.Title + ' (' + m.Year + ')</div>'
                             + '<div style="font-size:0.8em;color:#aaa;">' + (m.Overview || '') + '</div></div>'
@@ -68,14 +172,13 @@
                     });
                     document.querySelector('#MojitoResults').innerHTML = html || '<em>Aucun résultat.</em>';
                 }).catch(function (err) {
-                    document.querySelector('#MojitoResults').innerHTML = '<div class="errorMessage">Erreur : ' + (err.message || err) + '</div>';
+                    document.querySelector('#MojitoResults').innerHTML = '<div class="errorMessage">' + mjErr(err) + '</div>';
                 });
             }
 
             window.mjPickMedia = function (id) {
                 var type = document.querySelector('#MojitoType').value;
                 if (type === 'series') {
-                    MojitoState.selectedSeriesTvdbId = id;
                     document.querySelector('#MojitoEpisodes').innerHTML = '<em>Chargement des épisodes...</em>';
                     mjGet('mojito/episodes?seriesTvdbId=' + id).then(function (data) {
                         var html = '<h3>Épisodes</h3>';
@@ -92,16 +195,19 @@
                         MojitoState.seriesTitle = data.SeriesTitle;
                         document.querySelector('#MojitoEpisodes').innerHTML = html;
                     }).catch(function (err) {
-                        document.querySelector('#MojitoEpisodes').innerHTML = '<div class="errorMessage">Erreur : ' + (err.message || err) + '</div>';
+                        document.querySelector('#MojitoEpisodes').innerHTML = '<div class="errorMessage">' + mjErr(err) + '</div>';
                     });
                 } else {
                     document.querySelector('#MojitoReleases').innerHTML = '<em>Recherche des releases...</em>';
-                    mjGet('mojito/releases?movieTmdbId=' + id).then(function (releases) { mjShowReleases(releases, { MovieTmdbId: id }); });
+                    mjGet('mojito/releases?movieTmdbId=' + id).then(function (releases) {
+                        mjShowReleases(releases, { MovieTmdbId: id });
+                    }).catch(function (err) {
+                        document.querySelector('#MojitoReleases').innerHTML = '<div class="errorMessage">' + mjErr(err) + '</div>';
+                    });
                 }
             };
 
             window.mjEpisode = function (episodeId, info) {
-                MojitoState.selectedEpisode = episodeId;
                 document.querySelector('#MojitoReleases').innerHTML = '<em>Recherche des releases...</em>';
                 mjGet('mojito/releases?episodeId=' + episodeId).then(function (releases) {
                     mjShowReleases(releases, {
@@ -111,11 +217,13 @@
                         SeriesCreatedBySession: !!MojitoState.seriesCreatedBySession,
                         Title: MojitoState.seriesTitle
                     });
+                }).catch(function (err) {
+                    document.querySelector('#MojitoReleases').innerHTML = '<div class="errorMessage">' + mjErr(err) + '</div>';
                 });
             };
 
             function mjShowReleases(releases, payload) {
-                if (!releases.length) {
+                if (!releases || !releases.length) {
                     document.querySelector('#MojitoReleases').innerHTML = '<em>Aucune release torrent disponible.</em>';
                     return;
                 }
@@ -144,7 +252,7 @@
                     });
                     mjSessions();
                 }).catch(function (err) {
-                    require(['toast'], function (toast) { toast('Erreur : ' + (err.message || err)); });
+                    require(['toast'], function (toast) { toast('Erreur : ' + mjErr(err)); });
                 });
             };
 
@@ -156,34 +264,108 @@
                 }
             };
 
+            window.mjSessionAction = function (sessionId, action) {
+                mjPost('mojito/sessions/' + sessionId + '/' + action, {}).then(function () {
+                    mjSessions();
+                }).catch(function (err) {
+                    require(['toast'], function (toast) { toast('Erreur : ' + mjErr(err)); });
+                });
+            };
+
             function mjSessions() {
                 mjGet('mojito/sessions').then(function (sessions) {
                     var html = '';
                     sessions.forEach(function (s) {
                         html += '<div style="padding:6px 0;border-bottom:1px solid #333;display:flex;gap:8px;align-items:center;">'
                             + '<div style="flex:1"><div>' + s.Title + (s.EpisodeInfo ? ' — ' + s.EpisodeInfo : '') + '</div>'
-                            + '<div style="font-size:0.8em;color:#aaa;">' + s.State + ' — ' + Math.round(s.Progress * 100) + '%'
+                            + '<div style="font-size:0.8em;color:#aaa;">' + s.State + ' — ' + Math.round((s.Progress || 0) * 100) + '%'
                             + ' — ' + mjSize(s.DlSpeed) + '/s</div></div>'
                             + '<button is="emby-button" type="button" class="raised emby-button" onclick="mjOpen(\'' + s.Id + '\')"><span>Ouvrir</span></button>'
                             + '<button is="emby-button" type="button" class="raised emby-button" onclick="mjSessionAction(\'' + s.Id + '\', \'stop\')"><span>Terminer</span></button>'
                             + '</div>';
                     });
                     document.querySelector('#MojitoSessions').innerHTML = html || '<em>Aucune session.</em>';
-                }).catch(function () {
-                    document.querySelector('#MojitoSessions').innerHTML = '<em>Impossible de lister les sessions.</em>';
+                }).catch(function (err) {
+                    document.querySelector('#MojitoSessions').innerHTML = '<em>' + mjErr(err) + '</em>';
                 });
             }
 
-            window.mjSessionAction = function (sessionId, action) {
-                mjPost('mojito/sessions/' + sessionId + '/' + action, {}).then(function () {
-                    mjSessions();
-                }).catch(function (err) {
-                    require(['toast'], function (toast) { toast('Erreur : ' + (err.message || err)); });
-                });
-            };
+            // ── Paramètres (réservés aux utilisateurs pouvant lire la config du plugin) ──
 
-            document.querySelector('#MojitoSearchPage').addEventListener('pageshow', function () {
+            function mjFillConfig(config) {
+                document.querySelector('#RadarrUrl').value = config.RadarrUrl || '';
+                document.querySelector('#RadarrApiKey').value = config.RadarrApiKey || '';
+                document.querySelector('#SonarrUrl').value = config.SonarrUrl || '';
+                document.querySelector('#SonarrApiKey').value = config.SonarrApiKey || '';
+                document.querySelector('#QbitUrl').value = config.QbitUrl || '';
+                document.querySelector('#QbitUsername').value = config.QbitUsername || '';
+                document.querySelector('#QbitPassword').value = config.QbitPassword || '';
+                document.querySelector('#SavePath').value = config.SavePath || '';
+                document.querySelector('#TorrentTag').value = config.TorrentTag || '';
+                document.querySelector('#TorrentCategory').value = config.TorrentCategory || '';
+                document.querySelector('#StartThresholdBytes').value = config.StartThresholdBytes || 31457280;
+                document.querySelector('#StartThresholdPercent').value = config.StartThresholdPercent || 3;
+                document.querySelector('#Cleanup').value = String(config.Cleanup === undefined ? 0 : config.Cleanup);
+                document.querySelector('#KeepInLibrary').checked = !!config.KeepInLibrary;
+
+                mjGet('mojito/profiles?type=movie').then(function (profiles) {
+                    var sel = document.querySelector('#MovieQualityProfileId');
+                    sel.innerHTML = '<option value="0">Profil par défaut de Radarr</option>' + profiles.map(function (p) {
+                        return '<option value="' + p.Id + '">' + p.Name + '</option>';
+                    }).join('');
+                    sel.value = String(config.MovieQualityProfileId || 0);
+                }).catch(function () { /* Radarr non joignable */ });
+                mjGet('mojito/profiles?type=series').then(function (profiles) {
+                    var sel = document.querySelector('#SeriesQualityProfileId');
+                    sel.innerHTML = '<option value="0">Profil par défaut de Sonarr</option>' + profiles.map(function (p) {
+                        return '<option value="' + p.Id + '">' + p.Name + '</option>';
+                    }).join('');
+                    sel.value = String(config.SeriesQualityProfileId || 0);
+                }).catch(function () { /* Sonarr non joignable */ });
+            }
+
+            function mjLoadSettings() {
+                return ApiClient.getPluginConfiguration(MojitoConfig.pluginUniqueId).then(function (config) {
+                    document.querySelector('#MojitoSettings').style.display = '';
+                    mjFillConfig(config);
+                }).catch(function () {
+                    // Pas les droits : la page reste utilisable pour la recherche.
+                    document.querySelector('#MojitoSettings').style.display = 'none';
+                });
+            }
+
+            document.querySelector('#MojitoConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                ApiClient.getPluginConfiguration(MojitoConfig.pluginUniqueId).then(function (config) {
+                    config.RadarrUrl = document.querySelector('#RadarrUrl').value;
+                    config.RadarrApiKey = document.querySelector('#RadarrApiKey').value;
+                    config.SonarrUrl = document.querySelector('#SonarrUrl').value;
+                    config.SonarrApiKey = document.querySelector('#SonarrApiKey').value;
+                    config.QbitUrl = document.querySelector('#QbitUrl').value;
+                    config.QbitUsername = document.querySelector('#QbitUsername').value;
+                    config.QbitPassword = document.querySelector('#QbitPassword').value;
+                    config.SavePath = document.querySelector('#SavePath').value;
+                    config.TorrentTag = document.querySelector('#TorrentTag').value;
+                    config.TorrentCategory = document.querySelector('#TorrentCategory').value;
+                    config.StartThresholdBytes = parseInt(document.querySelector('#StartThresholdBytes').value, 10) || 31457280;
+                    config.StartThresholdPercent = parseInt(document.querySelector('#StartThresholdPercent').value, 10) || 3;
+                    config.Cleanup = parseInt(document.querySelector('#Cleanup').value, 10);
+                    config.KeepInLibrary = document.querySelector('#KeepInLibrary').checked;
+                    config.MovieQualityProfileId = parseInt(document.querySelector('#MovieQualityProfileId').value, 10) || 0;
+                    config.SeriesQualityProfileId = parseInt(document.querySelector('#SeriesQualityProfileId').value, 10) || 0;
+                    return ApiClient.updatePluginConfiguration(MojitoConfig.pluginUniqueId, config);
+                }).then(function () {
+                    require(['toast'], function (toast) { toast('Paramètres Mojito enregistrés.'); });
+                    mjLoadSettings();
+                }).catch(function (err) {
+                    require(['toast'], function (toast) { toast('Erreur à l\'enregistrement : ' + mjErr(err)); });
+                });
+                return false;
+            });
+
+            document.querySelector('#MojitoPage').addEventListener('pageshow', function () {
                 mjSessions();
+                mjLoadSettings();
                 if (!window._mjSessionsTimer) {
                     window._mjSessionsTimer = setInterval(mjSessions, 5000);
                 }
